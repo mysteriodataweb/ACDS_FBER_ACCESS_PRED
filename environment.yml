@@ -1,51 +1,12 @@
-# =============================================================================
-# Environnement Conda pour le projet FTTH Access Prediction - Togo
-# =============================================================================
-# Pour créer l'environnement : conda env create -f environment.yml
-# Pour activer : conda activate FTTH_Togo
-# =============================================================================
-
+# Environnement Conda du projet FTTH Access Prediction - Togo
+#   conda env create -f environment.yml   (depuis la racine du dépôt)
+#   conda activate FTTH_Togo
+# Les dépendances Python sont déclarées dans pyproject.toml.
 name: FTTH_Togo
 channels:
   - conda-forge
-  - defaults
-
 dependencies:
-  # Python
-  - python=3.10
-
-  # Data manipulation
-  - pandas>=2.0
-  - numpy>=1.23
-  - pyarrow>=12.0 # Pour le format Parquet (chargement rapide)
-
-  # Machine Learning
-  - scikit-learn>=1.2
-  - xgboost>=1.7
-  - lightgbm>=3.3
-
-  # Visualization
-  - matplotlib>=3.6
-  - seaborn>=0.12
-  - plotly>=5.11
-
-  # Model Interpretability
-  - shap>=0.41
-
-  # Utilities
-  - joblib>=1.2
-  - tqdm>=4.64
-
-  # Jupyter
-  - jupyter>=1.0
-  - notebook>=6.5
-  - ipykernel>=6.17
-  - ipywidgets>=8.0
-
-  # Statistics
-  - scipy>=1.9
-
-  # Pip packages (si non disponibles via conda)
+  - python=3.11
   - pip
   - pip:
-      - catboost>=1.1
+      - -e .[notebook,dev]
