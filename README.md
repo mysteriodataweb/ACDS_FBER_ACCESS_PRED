@@ -1,193 +1,144 @@
-#  Prédiction de l'Accès FTTH au Togo
+# Prédiction de l'accès FTTH au Togo
 
- de mon github pour vous permettre de le cloner directement***
+Projet réalisé par **Alfred Kwami BIAM** dans le cadre du programme **African Citizen Data Scientist (ACDS)**.
 
-*** la data.csv n'est pas pushée raison de sa taille, veuillezz de votre coté la charger dans le dossier data ***
+L'objectif est d'estimer, pour chaque ménage togolais, la probabilité d'avoir accès à la fibre optique
+(*FTTH – Fiber to the Home*) à partir de données socio-démographiques (recensement) et de 4 000 features
+géospatiales [MOSAIKS](https://www.mosaiks.org/) extraites d'images satellites.
 
-*** voici le lien google drive du challenge  si vous voulez bien le faire de votre coté : https://drive.google.com/drive/folders/1Cu0tUeayegKHuMiAdLgKnpnaebbMBBZY?usp=drive_link***
+## Résultats
 
+Split officiel du challenge (80/20 stratifié, `random_state=45`), modèle choisi par validation croisée
+sur le train puis évalué une seule fois sur le test :
 
+| Modèle retenu | AUC test | F1 | Accuracy | Précision | Rappel |
+|---|---|---|---|---|---|
+| Random Forest | 0,874 | 0,830 | 0,828 | 0,801 | 0,862 |
+
+> **À retenir sur la portée du modèle.** Les features MOSAIKS décrivent une tuile satellite, et les
+> 30 558 ménages ne couvrent que **423 tuiles** : 99,9 % des ménages du test sont dans une tuile déjà vue à
+> l'entraînement. Une simple moyenne du taux d'accès par tuile atteint déjà une AUC de **0,849**, et
+> sur des tuiles jamais vues (validation croisée spatiale) l'AUC du modèle tombe à **0,632**
+> (une simple régression logistique y fait un peu mieux : 0,662).
+> Le modèle est donc fiable pour **prioriser des ménages dans des zones déjà enquêtées**, pas pour
+> découvrir de nouvelles zones de déploiement. Détails dans le notebook (section XI) et dans
+> [`docs/AUDIT.md`](docs/AUDIT.md).
+
+## Installation
+
+Prérequis : Python ≥ 3.10 et [Git LFS](https://git-lfs.com/) (le jeu de données `Data/Data.parquet`,
+150 Mo, est stocké avec LFS).
 
 ```bash
-git clone https://github.com/Kba-hub-cell/ACDS_FBER_ACCESS_PRED.git
-cd BIAM_Kwami_Alfred_ACDS_2025
+git lfs install
+git clone https://github.com/mysteriodataweb/ACDS_FBER_ACCESS_PRED.git
+cd ACDS_FBER_ACCESS_PRED
+git lfs pull                      # télécharge Data/Data.parquet
+
+# Option 1 : pip (dans un environnement virtuel)
+python -m venv .venv && source .venv/bin/activate   # Windows : .venv\Scripts\activate
+pip install -r requirements.txt
+
+# Option 2 : conda
+conda env create -f environment.yml
+conda activate FTTH_Togo
 ```
 
-##  Description du Projet
+Le fichier CSV d'origine (~2,2 Go) n'est pas versionné. Si vous partez de lui, placez-le dans
+`Data/Data.csv` : la version Parquet est créée automatiquement au premier chargement. Les données du
+challenge sont disponibles sur
+[Google Drive](https://drive.google.com/drive/folders/1Cu0tUeayegKHuMiAdLgKnpnaebbMBBZY?usp=drive_link).
 
-Ce projet vise à prédire l'accès potentiel à la fibre optique (FTTH - Fiber to the Home) pour les ménages au Togo. En utilisant une combinaison de données socio-démographiques et de caractéristiques géospatiales MOSAIKS dérivées d'images satellites, nous développons des modèles de machine learning pour identifier les zones à fort potentiel de connectivité.
+## Utilisation
 
-###  Objectifs
+**Notebook** (analyse complète, commentée) :
 
-1. **Analyser** les facteurs influençant l'accès à Internet des ménages togolais
-2. **Prédire** la probabilité d'accès FTTH pour chaque ménage
-3. **Identifier** les zones prioritaires pour le déploiement de l'infrastructure
-4. **Comprendre** les déterminants socio-économiques de la connectivité numérique
+```bash
+jupyter lab notebooks/Fiber_Acces_pred.ipynb
+```
 
-## 📁 Structure du Projet
+L'exécution complète prend une vingtaine de minutes sur 4 cœurs et environ 4 Go de RAM.
+
+**Ligne de commande** (même protocole que le notebook) :
+
+```bash
+ftth-train --tune 15              # compare les modèles, optimise le meilleur, exporte dans Output/
+ftth-predict --input nouveaux_menages.parquet --output predictions.csv
+```
+
+`ftth-predict` attend des données au même format que `Data/Data.parquet` (la colonne cible est facultative)
+et produit, pour chaque `ID`, la probabilité d'accès, la prédiction (seuil 0,5, modifiable avec
+`--threshold`) et un niveau de potentiel (Faible / Moyen / Élevé / Très élevé).
+
+**Tests et lint** :
+
+```bash
+pytest
+ruff check src tests
+```
+
+## Méthodologie
+
+1. **Nettoyage** (`data.clean`) : libellés aux accents corrompus (`�`, `?`) ramenés à leur forme
+   correcte, colonnes MOSAIKS renommées `mosaiks_0` … `mosaiks_3999`, équipements `Oui`/`Non` → 1/0.
+   Les `ID` ne sont jamais modifiés.
+2. **Features** : 5 variables nominales (one-hot), taille du ménage, 33 équipements, et les 4 000 features
+   MOSAIKS réduites par PCA (6 composantes, 95 % de variance). `Connexion` est exclue car c'est une fuite
+   de la cible (manquante si et seulement si le ménage n'a pas accès) ; `BoxLabel` est constante.
+3. **Modèles comparés** : régression logistique, Random Forest, XGBoost, LightGBM, SVM, MLP.
+4. **Sélection** : AUC moyenne en validation croisée 5 plis sur le train (prétraitement réappris dans chaque
+   pli), puis recherche aléatoire d'hyperparamètres du meilleur modèle.
+5. **Évaluation** : test utilisé une seule fois ; validation croisée spatiale groupée par tuile ; calibration ;
+   interprétabilité SHAP.
+6. **Export** : pipeline complet (prétraitement + modèle) réutilisable sur de nouvelles données.
+
+## Structure du dépôt
 
 ```
 ACDS_FBER_ACCESS_PRED/
-│
-├── 📂 Data/                      # Données du projet
-│   ├── Data.csv                  # Dataset principal (~2.2 Go)
-│   └── Métadonnées.csv           # Description des variables
-│
-├── 📂 notebooks/                 # Notebooks Jupyter
-│   └── Fiber_Acces_pred.ipynb    # Notebook principal d'analyse
-│
-├── 📂 Output/                    # Résultats et exports
-│   ├── best_model_*.joblib       # Modèle entraîné
-│   ├── predictions_*.csv         # Prédictions
-│   └── rapport_*.json            # Rapport de performance
-│
-├── 📄 environment.yml            # Environnement Conda
-├── 📄 requirements.txt           # Dépendances pip (alternative)
-├── 📖 README.md                  # Documentation
-
-
+├── Data/
+│   ├── Data.parquet              # jeu de données (Git LFS)
+│   └── metadonnees.csv           # dictionnaire des variables
+├── docs/
+│   ├── AUDIT.md                  # limites de la version précédente et corrections
+│   └── images/
+├── notebooks/
+│   └── Fiber_Acces_pred.ipynb    # analyse complète
+├── Output/                       # figures, comparaison des modèles, prédictions, rapport JSON
+│   └── models/                   # pipeline entraîné (.joblib, non versionné)
+├── src/ftth_access/
+│   ├── config.py                 # chemins, colonnes, constantes (random_state=45…)
+│   ├── data.py                   # chargement et nettoyage
+│   ├── features.py               # pipeline de prétraitement
+│   ├── models.py                 # modèles et espaces de recherche
+│   ├── evaluation.py             # validation croisée, métriques, seuil
+│   ├── train.py                  # entraînement de bout en bout (ftth-train)
+│   └── predict.py                # prédictions sur de nouvelles données (ftth-predict)
+├── tests/                        # tests pytest (données synthétiques)
+├── RAPPORT_PRESENTATION.md       # synthèse pour décideurs, opérateurs et data scientists
+├── pyproject.toml                # dépendances et configuration
+├── requirements.txt
+└── environment.yml
 ```
 
-##  Installation
+## Données
 
-### Prérequis
+| Catégorie | Variables | Description |
+|---|---|---|
+| Identifiant | `ID` | Identifiant du ménage |
+| Logement | `TypeLogmt_1`, `TypeLogmt_2`, `TypeLogmt_3` | Modernité, nombre de logements, nombre de niveaux |
+| Énergie | `H08_Impute`, `H09_Impute` | Mode d'éclairage, énergie de cuisson |
+| Ménage | `TAILLE_MENAGE` | Nombre de personnes |
+| Équipements | `H17*`, `H18*`, `H20*`, `H21*` | Transport, électroménager, audiovisuel, agricole (Oui/Non) |
+| Opérateur | `Connexion` | Exclue (fuite de la cible) |
+| MOSAIKS | 4 000 colonnes | Features d'images satellites, identiques pour tous les ménages d'une tuile |
+| Cible | `Accès internet` | Présence de la fibre dans le ménage (0/1, 48,8 % de 1) |
 
-- [Anaconda](https://www.anaconda.com/download) ou [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
-- Git (optionnel)
+Le détail de chaque variable est dans [`Data/metadonnees.csv`](Data/metadonnees.csv).
 
-### Étape 1 : Cloner le projet
+## Dépannage
 
-```bash
-git clone https://github.com/Kba-hub-cell/ACDS_FBER_ACCESS_PRED.git
-cd BIAM_Kwami_Alfred_ACDS_2025
-```
-
-### Étape 2 : Créer l'environnement Conda
-
-```bash
-# Créer l'environnement à partir du fichier environment.yml
-conda env create -f environment.yml
-
-# Activer l'environnement
-conda activate FTTH_Togo
-```
-
-### Étape 3 : Lancer Jupyter Notebook
-
-```bash
-# Option 1 : Jupyter Notebook classique
-jupyter notebook notebooks/Fiber_Acces_pred.ipynb
-
-# Option 2 : JupyterLab
-jupyter lab
-
-# Option 3 : VS Code
-# Ouvrir le notebook dans VS Code et sélectionner le kernel "FTTH_Togo"
-```
-
-##  Description des Données
-
-### Dataset Principal (Data.csv)
-
-| Catégorie                | Variables                               | Description                                    |
-| ------------------------ | --------------------------------------- | ---------------------------------------------- |
-| **Identifiants**         | ID, longitude, latitude                 | Localisation des ménages                       |
-| **Socio-démographiques** | TypeLogmt, TAILLE_MENAGE, H08_Impute... | Caractéristiques des ménages (RGPH/INSEED)     |
-| **Équipements**          | H17*\*, H18*_, H20\__, H21\_\*          | Possession d'équipements                       |
-| **Connectivité**         | Connexion, BoxLabel                     | État de la connexion actuelle                  |
-| **MOSAIKS**              | .1 à .3999                              | 4000 features géospatiales (images satellites) |
-| **Target**               | Accès internet                          | Variable cible binaire (0/1)                   |
-
-### Dimensions
-
-- **30 558** observations (ménages)
-- **4 002** variables
-- **~2.2 Go** (format CSV)
-
-##  Modèles Utilisés
-
-| Modèle                  | Description                | Avantages                       |
-| ----------------------- | -------------------------- | ------------------------------- |
-| **Logistic Regression** | Modèle linéaire de base    | Interprétable, rapide           |
-| **Random Forest**       | Ensemble bagging           | Robuste, feature importance     |
-| **XGBoost**             | Gradient boosting          | Performance élevée              |
-| **LightGBM**            | Gradient boosting optimisé | Rapide, efficace en mémoire     |
-| **SVM**                 | Support Vector Machine     | Bon pour données complexes      |
-| **MLP**                 | Réseau de neurones         | Capture relations non-linéaires |
-
-##  Métriques d'Évaluation
-
-- **AUC-ROC** : Capacité de discrimination du modèle
-- **F1-Score** : Équilibre précision/rappel
-- **Accuracy** : Taux de classification correcte
-- **Precision/Recall** : Performance sur la classe positive
-
-##  Interprétabilité
-
-Le projet utilise **SHAP (SHapley Additive exPlanations)** pour :
-
-- Identifier les features les plus importantes
-- Comprendre l'impact de chaque variable
-- Visualiser les interactions entre features
-
-##  Optimisations de Performance
-
-Le fichier de données étant volumineux (2.2 Go), plusieurs optimisations sont implémentées :
-
-1. **Format Parquet** : Conversion automatique pour des chargements 5-10x plus rapides
-2. **Types optimisés** : float32 au lieu de float64 pour les MOSAIKS
-3. **Sélection de features** : Réduction des 4000 MOSAIKS aux plus pertinentes
-
-##  Outputs
-
-Après exécution, le dossier `Output/` contiendra :
-
-| Fichier               | Description                              |
-| --------------------- | ---------------------------------------- |
-| `best_model_*.joblib` | Modèle entraîné prêt pour le déploiement |
-| `scaler_*.joblib`     | Scaler pour normalisation                |
-| `predictions_*.csv`   | Prédictions avec probabilités            |
-| `rapport_*.json`      | Métriques de performance                 |
-
-##  Contribution
-
-Ce projet fait partie de l'initiative **African Citizen Data Scientist** visant à développer les compétences en science des données en Afrique.
-
-### Auteurs
-
-- Projet réalisé dans le cadre du programme ACDS par Alfred Kwami BIAM
-
-
-
-
----
-
-##  Dépannage
-
-### L'environnement Conda ne se crée pas
-
-```bash
-# Mettre à jour Conda
-conda update conda
-
-# Réessayer la création
-conda env create -f environment.yml
-```
-
-### Le kernel n'apparaît pas dans Jupyter/VS Code
-
-```bash
-# Activer l'environnement
-conda activate FTTH_Togo
-
-# Enregistrer le kernel
-python -m ipykernel install --user --name=FTTH_Togo --display-name="Python (FTTH_Togo)"
-```
-
-### Problème de mémoire avec le fichier de données
-
-Le notebook convertit automatiquement les données en format Parquet après le premier chargement, ce qui accélère les chargements suivants et réduit l'utilisation mémoire.
-
----
-
-**Pour toute question ou collaboration, n'hésitez pas à me contacter.**
+- **`RuntimeError: ... est un pointeur Git LFS`** : Git LFS n'était pas installé lors du clone ; lancez
+  `git lfs install && git lfs pull`.
+- **Le kernel n'apparaît pas dans Jupyter / VS Code** :
+  `python -m ipykernel install --user --name FTTH_Togo --display-name "Python (FTTH_Togo)"`.

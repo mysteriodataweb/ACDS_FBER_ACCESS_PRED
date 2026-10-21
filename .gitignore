@@ -1,44 +1,32 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
-.Python
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
+.eggs/
+.pytest_cache/
+.ruff_cache/
 
-# Virtual Environment
-FIBER_env/
+# Environnements virtuels
+.venv/
 venv/
-ENV/
 env/
+ENV/
+FIBER_env/
 
+# Jupyter
+.ipynb_checkpoints/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# Data files tracked with Git LFS
-# Only Data.parquet is pushed (Data.csv is too large even for LFS)
+# Données : Data.csv (~2,2 Go) est trop volumineux, même pour Git LFS.
+# Seul Data/Data.parquet est versionné (via LFS).
 Data/Data.csv
 
-# Output files
-Output/*.joblib
-Output/*.pkl
-notebooks/Output/*.joblib
-notebooks/Output/*.pkl
+# Modèles entraînés (régénérés par `ftth-train` ou le notebook)
+Output/models/
+*.joblib
+*.pkl
 
 # IDE
 .vscode/
@@ -46,7 +34,6 @@ notebooks/Output/*.pkl
 *.swp
 *.swo
 *~
-.github/
 
 # OS
 .DS_Store
