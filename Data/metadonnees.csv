@@ -1,0 +1,43 @@
+Colonnes,Descriptions (Fr),Descriptions (En)
+id,Identifiant,Identification
+TypeLogmt_1,Type de logement (par rapport à la modernité),Type of housing (in relation to modernity)
+TypeLogmt_2,Type de logement (par rapport au nombre de logements),Type of accommodation (in relation to the number of accommodations)
+TypeLogmt_3,Type de logement (par rapport au nombre de niveaux),Type of accommodation (in relation to the number of levels)
+H08_Impute,Principal mode d’éclairage,Main lighting mode
+H09_Impute,Principale source d’énergie utilisée pour la cuisson,Main source of energy used for cooking
+TAILLE_MENAGE,Taille du ménage,Household size
+H17A,Vélo,Bike
+H17B,Motocyclette à usage personnel,Motorcycle for personal use
+H17C,Motocyclette à usage de taxi,Motorcycle for taxi use
+H17D,Tricycle à usage personnel,Tricycle for personal use
+H17E,Tricycle à usage de taxi (passager et marchandise),Tricycle for taxi use (passenger and goods)
+H17F,Voiture à usage personnel,Car for personal use
+H17G,Voiture à usage de taxi,Car for taxi use
+H17H,Charrette,Cart
+H17I,Pirogue,Canoe
+H17J,"Animal (Ane, Cheval...)","Animal (Donkey, Horse...)"
+H17Y,Aucun,None
+H18A,Ventilateur,Fan
+H18B,Climatiseur/Split,Air Conditioner/Split
+H18C,Réfrigérateur/Congélateur,Fridge Freezer
+H18D,Gazinière/Cuisinière,Gas stove/Stove
+H18E,Fer à répasser électrique,Electric iron
+H18F,Cafétière,Coffee maker
+H18G,Four à Micro-onde,Microwave oven
+H18H,Mixeur (Moulinex),Mixer (Moulinex)
+H18I,Foufou-mix,Foufou-mix
+H18J,Autre,Other
+H18Y,Aucun,None
+H20A,Poste radio,Radio station
+H20B,Poste téléviseur non relié à une antenne parabolique/câble,Television set not connected to a satellite/cable antenna
+H20C,Poste téléviseur avec antenne parabolique/câble,TV set with satellite/cable antenna
+H20D,Magnetoscope,Magnetoscope
+H20E,"Lecteur (VCD/DVD/ Clé USB, carte mémoire)","Player (VCD/DVD/USB key, memory card)"
+H20Y,Aucun,None
+H21A,"Equipements de transformation de produits agricoles (Moulin, égreneuse,Rappeuse "," Equipment for processing agricultural products (mill, ginner, stripper)"
+H21B,"Equipement agricole( tracteur, motoculteur)","Agricultural equipment (tractor, tiller)"
+H21C,Terrain d'exploitation agricole,Agricultural land
+H21D,Pompe immergée (Forage),Submerged pump (Drilling)
+H21Y,Aucun équipement ni terrain agricole,No equipment or agricultural land
+Connexion,Opérateurs distribuant la connexion,Operators distributing the connection
+Accès internet,Présence de FTTH ou non dans un ménage : Variable cible,Presence of FTTH or not in a household: Target variable

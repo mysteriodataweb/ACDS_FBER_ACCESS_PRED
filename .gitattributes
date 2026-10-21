@@ -1,2 +1,5 @@
+# Seul le jeu de données principal (150 Mo) passe par Git LFS.
 Data/*.parquet filter=lfs diff=lfs merge=lfs -text
-Data/*.csv filter=lfs diff=lfs merge=lfs -text
+
+# Notebooks : fins de ligne normalisées pour des diffs lisibles.
+*.ipynb text eol=lf
