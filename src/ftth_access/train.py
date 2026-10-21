@@ -300,7 +300,7 @@ def save_artifacts(output_dir, pipeline, model_name, feature_columns, cv_summary
         "trained_at": report["date_execution"],
         "versions": report["versions"],
     }
-    joblib.dump(bundle, models_dir / MODEL_FILENAME)
+    joblib.dump(bundle, models_dir / MODEL_FILENAME, compress=3)  # ~5x plus petit (Random Forest profond)
     cv_summary.rename_axis("Modèle").to_csv(output_dir / "model_comparison.csv")
     predictions.to_csv(output_dir / "predictions_test.csv", index=False)
     with open(output_dir / "rapport_modele.json", "w", encoding="utf-8") as f:

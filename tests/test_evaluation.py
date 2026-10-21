@@ -45,3 +45,13 @@ def test_cross_validate_models_returns_sorted_summary_and_oof(raw_df):
     assert summary["AUC (mean)"].is_monotonic_decreasing
     assert {"AUC (mean)", "AUC (std)", "F1-Score (mean)"} <= set(summary.columns)
     assert not np.isnan(oof["lr"]).any() and len(oof["lr"]) == len(X)
+
+
+def test_drop_features_removes_prefix_in_every_fold(raw_df):
+    X, y, _ = data.get_X_y(data.clean(raw_df))
+    prep = build_preprocessor(data.feature_groups(X.columns))
+    folds = evaluation.make_folds(prep, X, y, StratifiedKFold(3, shuffle=True, random_state=0))
+    for fold in evaluation.drop_features(folds, "mosaiks_pc"):
+        assert not fold.X_train.columns.str.startswith("mosaiks_pc").any()
+        assert list(fold.X_train.columns) == list(fold.X_valid.columns)
+        assert "TAILLE_MENAGE" in fold.X_train.columns

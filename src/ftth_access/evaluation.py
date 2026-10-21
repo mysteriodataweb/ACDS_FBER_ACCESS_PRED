@@ -68,9 +68,19 @@ def make_folds(preprocessor, X, y, cv, groups=None):
     return folds
 
 
-def select_features(folds, columns):
-    """Mêmes plis restreints à un sous-ensemble de features prétraitées."""
-    return [Fold(f.X_train[columns], f.y_train, f.X_valid[columns], f.y_valid, f.valid_index) for f in folds]
+def drop_features(folds, prefix):
+    """Mêmes plis sans les features dont le nom commence par `prefix`.
+
+    Le filtre est appliqué pli par pli : les colonnes one-hot peuvent différer
+    d'un pli à l'autre quand une modalité rare est absente d'un entraînement.
+    """
+    dropped = []
+    for f in folds:
+        keep = ~f.X_train.columns.str.startswith(prefix)
+        dropped.append(
+            Fold(f.X_train.loc[:, keep], f.y_train, f.X_valid.loc[:, keep], f.y_valid, f.valid_index)
+        )
+    return dropped
 
 
 def cross_validate_model(model, folds):

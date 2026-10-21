@@ -27,6 +27,7 @@ notebook = [
     "scipy>=1.10",
     "jupyter>=1.0",
     "ipykernel>=6.17",
+    "ipywidgets>=8.0",
 ]
 dev = [
     "pytest>=7.0",
